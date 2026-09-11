@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #f7f6f2;
+  color: #1c1917;
+}
+
+.font-quran {
+  font-family: "Amiri", "Scheherazade New", "Noto Naskh Arabic", serif;
+  line-height: 2.15;
+  font-size: 1.65rem;
+}
