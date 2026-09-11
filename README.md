@@ -38,6 +38,25 @@ uvicorn app.main:app --reload       # http://localhost:8000/docs
 cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
 
+## Deploy
+
+### Frontend on Vercel
+
+1. Import the repo into Vercel with **Root Directory = `frontend`** (Vite settings auto-detected from `frontend/vercel.json`).
+2. Set environment variable `VITE_API_BASE` to your backend URL (e.g. `https://api.yourdomain.com`). Leave unset for local dev — the Vite dev server proxies `/api` to `localhost:8000`.
+
+### Backend options
+
+**Option A — Docker (recommended, read/write DB):** run `docker compose up -d` on any server, put it behind your reverse proxy/domain, and set `ALLOWED_ORIGINS=https://<your-frontend>.vercel.app` for the backend container.
+
+**Option B — Vercel Python serverless:** import the repo with **Root Directory = `backend`**. Set Build Command to:
+
+```
+pip install -r requirements.txt && python scripts/import_quran.py --skip-words
+```
+
+This pre-generates the SQLite DB inside the serverless bundle (runtime FS is read-only — fine for Phase 1's read-only data, but for Phase 2+ move to a hosted DB like Turso/Neon). Set `ALLOWED_ORIGINS` to your Vercel frontend URL.
+
 ## Data sources & attribution
 
 - Quran text & translations: [quran.com API v4](https://api.quran.com) / Tanzil.net
