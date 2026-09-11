@@ -49,13 +49,7 @@ cd frontend && npm install && npm run dev   # http://localhost:5173
 
 **Option A — Docker (recommended, read/write DB):** run `docker compose up -d` on any server, put it behind your reverse proxy/domain, and set `ALLOWED_ORIGINS=https://<your-frontend>.vercel.app` for the backend container.
 
-**Option B — Vercel Python serverless:** import the repo with **Root Directory = `backend`**. Set Build Command to:
-
-```
-pip install -r requirements.txt && python scripts/import_quran.py --skip-words
-```
-
-This pre-generates the SQLite DB inside the serverless bundle (runtime FS is read-only — fine for Phase 1's read-only data, but for Phase 2+ move to a hosted DB like Turso/Neon). Set `ALLOWED_ORIGINS` to your Vercel frontend URL.
+**Option B — Vercel Python serverless (DB committed at 11 MB):** import the repo with **Root Directory = `backend`** — settings auto-apply from `backend/vercel.json`. The SQLite DB ships with the repo (read-only at runtime — fine for Phase 1's read-only data; Phase 2+ moves to a hosted DB like Turso/Neon). CORS is open by default; optionally set `ALLOWED_ORIGINS` to your frontend URL.
 
 ## Data sources & attribution
 

@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 venv/
 backend/*.db
+!backend/miraz.db
 backend/data/*.txt
 backend/data/*.zip
 

@@ -14,13 +14,11 @@ app = FastAPI(
     ),
 )
 
-# Comma-separated list, e.g. ALLOWED_ORIGINS=https://miraz.vercel.app,https://miraz.example
+# Public read-only research API: permissive by default; set ALLOWED_ORIGINS
+# (comma-separated) to restrict, e.g. https://miraz.vercel.app
 _origins = [
     o.strip()
-    for o in os.environ.get(
-        "ALLOWED_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173",
-    ).split(",")
+    for o in os.environ.get("ALLOWED_ORIGINS", "*").split(",")
     if o.strip()
 ]
 
