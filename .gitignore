@@ -15,5 +15,22 @@ frontend/.vite/
 
 # Env / misc
 .env
+.env.local
+.env.*.local
 .DS_Store
 *.log
+
+# Vercel
+.vercel
+
+# Build artifacts that should not be committed
+frontend/dist/
+backend/__pycache__/
+{backend/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

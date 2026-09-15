@@ -2,7 +2,7 @@
 
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Noto Naskh Arabic", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   background: #f7f6f2;
   color: #1c1917;
 }
@@ -11,4 +11,25 @@ body {
   font-family: "Amiri", "Scheherazade New", "Noto Naskh Arabic", serif;
   line-height: 2.15;
   font-size: 1.65rem;
+}
+
+/* Loading skeleton animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth transitions */
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }

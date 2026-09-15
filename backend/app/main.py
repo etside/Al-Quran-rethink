@@ -29,14 +29,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(chapters.router)
-app.include_router(verses.router)
-app.include_router(words.router)
-app.include_router(roots.router)
-app.include_router(layers.router)
-app.include_router(search.router)
+app.include_router(chapters.router, prefix="/api")
+app.include_router(verses.router, prefix="/api")
+app.include_router(words.router, prefix="/api")
+app.include_router(roots.router, prefix="/api")
+app.include_router(layers.router, prefix="/api")
+app.include_router(search.router, prefix="/api")
 
 
 @app.get("/health")
 def health():
-    return {"ok": True, "service": "miraz-api"}
+    """Health check endpoint for monitoring and load balancers."""
+    return {"ok": True, "service": "miraz-api", "version": app.version}
+
+
+@app.get("/api/health")
+def api_health():
+    """API-specific health check with /api prefix."""
+    return {"ok": True, "service": "miraz-api", "version": app.version}

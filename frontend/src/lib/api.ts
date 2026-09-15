@@ -1,4 +1,4 @@
-export const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+export const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 export interface Chapter {
   id: number;
@@ -41,7 +41,8 @@ export interface LayerInfo {
 }
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
+  const url = `${API_BASE}/api${path}`;
+  const res = await fetch(url);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { detail?: string }).detail ?? `${res.status} ${res.statusText}`);

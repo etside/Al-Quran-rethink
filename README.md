@@ -26,30 +26,86 @@ with isnad graphs — with full transparency about sources, methods, and reliabi
 - `frontend/` — React + Vite + Tailwind. Verse view with toggleable layers and click-any-word root panel.
 - `docker-compose.yml` — full stack deployment (backend, frontend, Postgres).
 
-## Run locally (no Docker)
+## Quick Start
+
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- npm or yarn
+
+### Option 1: Using the startup script (recommended)
 
 ```bash
-# Backend
-cd backend && pip install -r requirements.txt
-python scripts/import_quran.py      # fetches Quran + translations incl. Bengali; offline-safe demo seed
-uvicorn app.main:app --reload       # http://localhost:8000/docs
+# Make the script executable
+chmod +x start-dev.sh
 
-# Frontend
-cd frontend && npm install && npm run dev   # http://localhost:5173
+# Run both backend and frontend
+./start-dev.sh
 ```
 
-## Deploy
+### Option 2: Manual setup
 
-### Frontend on Vercel
+#### Backend
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+pip install -r requirements.txt
 
-1. Import the repo into Vercel with **Root Directory = `frontend`** (Vite settings auto-detected from `frontend/vercel.json`).
-2. Set environment variable `VITE_API_BASE` to your backend URL (e.g. `https://api.yourdomain.com`). Leave unset for local dev — the Vite dev server proxies `/api` to `localhost:8000`.
+# Import Quran data (if not already done)
+python scripts/import_quran.py
 
-### Backend options
+# Start backend server
+uvicorn app.main:app --reload --port 8000
+```
 
-**Option A — Docker (recommended, read/write DB):** run `docker compose up -d` on any server, put it behind your reverse proxy/domain, and set `ALLOWED_ORIGINS=https://<your-frontend>.vercel.app` for the backend container.
+#### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-**Option B — Vercel Python serverless (DB committed at 11 MB):** import the repo with **Root Directory = `backend`** — settings auto-apply from `backend/vercel.json`. The SQLite DB ships with the repo (read-only at runtime — fine for Phase 1's read-only data; Phase 2+ moves to a hosted DB like Turso/Neon). CORS is open by default; optionally set `ALLOWED_ORIGINS` to your frontend URL.
+The frontend will be available at `http://localhost:5173` and will proxy API requests to `http://localhost:8000`.
+
+## Deployment
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Quick Deploy to Vercel
+
+#### Frontend
+1. Push your code to GitHub
+2. Import the repository in Vercel
+3. Set **Root Directory** to `frontend`
+4. Add environment variable: `VITE_API_BASE` = your backend URL
+5. Deploy!
+
+#### Backend
+1. Import the same repository in Vercel (create a second project)
+2. Set **Root Directory** to `backend`
+3. Add environment variable: `ALLOWED_ORIGINS` = your frontend URL
+4. Deploy!
+
+### Alternative: Docker
+
+```bash
+# Run full stack with Docker
+docker compose up -d
+
+# Access:
+# Frontend: http://localhost:5173
+# Backend: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_BASE` | Backend API URL (frontend) | `""` (uses `/api` prefix) |
+| `ALLOWED_ORIGINS` | CORS origins (backend) | `*` |
+| `MIRAZ_DB` | SQLite database path (backend) | `../miraz.db` |
 
 ## Data sources & attribution
 

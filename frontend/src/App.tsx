@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type Chapter, type LayerInfo, type VerseData, type WordData } from "./lib/api";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { LoadingSpinner, VerseSkeleton, ChapterSkeleton } from "./components/LoadingStates";
 
 type View = "read" | "search";
 
@@ -260,32 +262,50 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Awaited<ReturnType<typeof api.search>> | null>(null);
+  const [loadingChapters, setLoadingChapters] = useState(true);
+  const [loadingVerses, setLoadingVerses] = useState(false);
+  const [loadingSearch, setLoadingSearch] = useState(false);
 
   useEffect(() => {
-    api.chapters().then(setChapters).catch((e) => setError(String(e.message ?? e)));
+    setLoadingChapters(true);
+    setError(null);
+    api.chapters()
+      .then(setChapters)
+      .catch((e) => setError(String(e.message ?? e)))
+      .finally(() => setLoadingChapters(false));
     api.layers().then(setLayers).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (view !== "read") return;
     setVerses([]);
-    api.chapterVerses(chapterId).then(setVerses).catch((e) => setError(String(e.message ?? e)));
+    setLoadingVerses(true);
+    setError(null);
+    api.chapterVerses(chapterId)
+      .then(setVerses)
+      .catch((e) => setError(String(e.message ?? e)))
+      .finally(() => setLoadingVerses(false));
   }, [chapterId, view]);
 
   const doSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim().length < 2) return;
     setResults(null);
+    setLoadingSearch(true);
+    setError(null);
     try {
       setResults(await api.search(query, showBn ? "bn" : "en"));
     } catch (err) {
       setError(String((err as Error).message));
+    } finally {
+      setLoadingSearch(false);
     }
   };
 
   const chapter = chapters.find((c) => c.id === chapterId);
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-stone-200 bg-[#f7f6f2]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
@@ -342,7 +362,9 @@ export default function App() {
 
           {view === "read" && (
             <>
-              {chapter && (
+              {loadingChapters ? (
+                <ChapterSkeleton />
+              ) : chapter ? (
                 <div className="rounded-2xl border border-emerald-800/20 bg-white p-5 text-center shadow-sm">
                   <h2 className="text-2xl font-bold">{chapter.name_en}</h2>
                   <p className="font-quran text-3xl" dir="rtl" lang="ar">
@@ -353,11 +375,18 @@ export default function App() {
                     <MethodChip label="scripture" /> <span className="text-stone-400">unqualified — the Quran itself</span>
                   </p>
                 </div>
+              ) : null}
+              {loadingVerses ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <VerseSkeleton key={i} />
+                  ))}
+                </div>
+              ) : (
+                verses.map((v) => (
+                  <VerseCard key={v.id} v={v} showEn={showEn} showBn={showBn} onWord={setSelectedWord} />
+                ))
               )}
-              {verses.map((v) => (
-                <VerseCard key={v.id} v={v} showEn={showEn} showBn={showBn} onWord={setSelectedWord} />
-              ))}
-              {!verses.length && !error && <p className="text-sm text-stone-400">Loading…</p>}
             </>
           )}
 
@@ -370,30 +399,39 @@ export default function App() {
                   placeholder="Search by keyword (translation text)…"
                   className="flex-1 rounded-xl border border-stone-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-emerald-700"
                 />
-                <button className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800">
-                  Search
+                <button
+                  disabled={loadingSearch}
+                  className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+                >
+                  {loadingSearch ? "Searching…" : "Search"}
                 </button>
               </form>
               <p className="text-xs text-stone-400">
                 Searching {showBn ? "Bengali" : "English"} translation. Root and theme search arrive with the corpus layer.
               </p>
-              {results?.map((r, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setChapterId(r.chapter);
-                    setView("read");
-                  }}
-                  className="block w-full rounded-xl border border-stone-200 bg-white p-4 text-left shadow-sm hover:border-emerald-300"
-                >
-                  <span className="text-xs font-bold text-emerald-700">
-                    {r.chapter}:{r.verse}
-                  </span>
-                  <span className="ml-2 text-[10px] uppercase text-stone-400">{r.translator_name}</span>
-                  <p className="mt-1 line-clamp-2 text-sm text-stone-700">{r.snippet}</p>
-                </button>
-              ))}
-              {results && !results.length && <p className="text-sm text-stone-400">No results.</p>}
+              {loadingSearch ? (
+                <LoadingSpinner text="Searching translations…" />
+              ) : (
+                <>
+                  {results?.map((r, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setChapterId(r.chapter);
+                        setView("read");
+                      }}
+                      className="block w-full rounded-xl border border-stone-200 bg-white p-4 text-left shadow-sm hover:border-emerald-300 transition-colors"
+                    >
+                      <span className="text-xs font-bold text-emerald-700">
+                        {r.chapter}:{r.verse}
+                      </span>
+                      <span className="ml-2 text-[10px] uppercase text-stone-400">{r.translator_name}</span>
+                      <p className="mt-1 line-clamp-2 text-sm text-stone-700">{r.snippet}</p>
+                    </button>
+                  ))}
+                  {results && !results.length && <p className="text-sm text-stone-400">No results.</p>}
+                </>
+              )}
             </div>
           )}
         </section>
@@ -422,5 +460,6 @@ export default function App() {
         Miraz · open scholarly research · data: quran.com API (Tanzil), Quranic Arabic Corpus — attribution in README
       </footer>
     </div>
+    </ErrorBoundary>
   );
 }
