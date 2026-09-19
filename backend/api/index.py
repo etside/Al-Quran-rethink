@@ -1,10 +1,13 @@
-"""Vercel Python serverless entrypoint for the Miraz API.
+"""Vercel Python serverless entrypoint for the Miraz single webapp.
 
-Deploy the backend as its own Vercel project with `backend/` as the root
-directory. The SQLite database (backend/miraz.db) is committed to the repo and
-ships in the serverless bundle; the runtime filesystem is read-only, which is
-fine for Phase 1's read-only data. For Phase 2+ move to a hosted DB (Turso /
-Neon) or run the Docker deployment on a server.
+Deploy from the REPO ROOT as one Vercel project (see root vercel.json):
+the build step compiles the React UI into backend/static/, and this
+function serves both the API (/api/*) and the UI (/*) from one origin.
+
+The SQLite database (backend/miraz.db) ships in the serverless bundle; the
+runtime filesystem is read-only, which is fine for the read-only research
+data. For write traffic / Phase 2+, move to a hosted DB (Turso / Neon) or
+run the Docker single-image deployment on a server.
 """
 
 import os

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd frontend && npm ci && VITE_API_BASE= npm run build && rm -rf ../backend/static && cp -r dist ../backend/static",
+  "builds": [{ "src": "backend/api/index.py", "use": "@vercel/python" }],
+  "functions": {
+    "backend/api/index.py": { "includeFiles": "backend/static/**", "memory": 1024 }
+  },
+  "routes": [{ "src": "/(.*)", "destination": "/backend/api/index.py" }]
+}

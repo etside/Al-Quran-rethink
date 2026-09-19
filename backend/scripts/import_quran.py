@@ -115,54 +115,35 @@ def import_words(client: httpx.Client, db, chapter_id: int) -> int:
 
 
 def try_morphology(client: httpx.Client, db) -> str:
-    """Load Quranic Arabic Corpus morphology (word roots + POS).
-
-    Priority 1: a local file at backend/data/corpus_morphology.txt (the official
-    `Quranic-corpus-morphology-0.4.txt` distribution, obtainable from
-    corpus.quran.com or its mirrors). Priority 2: best-effort GitHub mirrors.
-    Corpus line format: `(1:1:2) ismi N STEM|POS:N|LEM:ism|ROOT:ism|...`
-    """
-    local = Path(__file__).resolve().parent.parent / "data" / "corpus_morphology.txt"
-    if local.exists():
-        n = parse_morphology(local.read_text(encoding="utf-8"), db)
-        if n:
-            return f"loaded {n} words (roots/POS) from local {local.name}"
-    return (
-        "skipped — place Quranic-corpus-morphology-0.4.txt at backend/data/corpus_morphology.txt; "
-        "root panel will show POS/translation only until then"
-    )
+    """Load Quranic Arabic Corpus morphology (word roots + POS) via
+    scripts/import_morphology.py (Buckwalter-decoded, bulk, fill-nulls)."""
+    try:
+        from scripts.import_morphology import DATA, import_morphology, load_corpus
+    except ImportError:  # pragma: no cover - direct-path fallback
+        from import_morphology import DATA, import_morphology, load_corpus  # type: ignore
+    if not DATA.exists():
+        return (
+            "skipped — morphology file not present at backend/data/corpus_morphology.txt; "
+            "download Quranic-corpus-morphology-0.4.txt there (see scripts/import_morphology.py)"
+        )
+    report = import_morphology(db, load_corpus(DATA))
+    return f"loaded {report['words_updated']} words ({report['distinct_roots']} roots) from {DATA.name}"
 
 
 def parse_morphology(raw: str, db) -> int:
-    """Parse the Quranic Arabic Corpus morphology distribution: per word
-    `(c:v:w) token TAG FEATURES|ROOT:xxx|...`. Maps ROOT and POS to Word rows
-    matched by (chapter, verse, position)."""
-    line_re = re.compile(r"\((\d+):(\d+):(\d+)\)\s+(\S+)\s+(\S+)\s*(.*)")
-    root_re = re.compile(r"ROOT:([^|\s]+)")
-    n = 0
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line.startswith("("):
-            continue
-        m = line_re.match(line)
-        if not m:
-            continue
-        c, v, w = int(m.group(1)), int(m.group(2)), int(m.group(3))
-        pos_tag, features = m.group(5), m.group(6)
-        root_m = root_re.search(features)
-        verse = db.query(Verse).filter(Verse.chapter_id == c, Verse.number == v).first()
-        if not verse:
-            continue
-        word = db.query(Word).filter(Word.verse_id == verse.id, Word.position == w).first()
-        if not word:
-            continue
-        if root_m:
-            word.root_ar = root_m.group(1)
-        if pos_tag:
-            word.part_of_speech = pos_tag
-        n += 1
-    db.commit()
-    return n
+    """Legacy entry point (kept for API compat): parse raw corpus text."""
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
+        f.write(raw)
+        tmp = Path(f.name)
+    try:
+        try:
+            from scripts.import_morphology import import_morphology, load_corpus
+        except ImportError:
+            from import_morphology import import_morphology, load_corpus  # type: ignore
+        return import_morphology(db, load_corpus(tmp))["words_updated"]
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def main() -> None:

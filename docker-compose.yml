@@ -1,23 +1,21 @@
+# Miraz — single webapp (one origin: UI + API on :8000).
+# The image ships with the database baked in; /data persists it across restarts.
 services:
-  backend:
-    build: ./backend
-    environment:
-      - MIRAZ_DB=/data/miraz.db
-    volumes:
-      - miraz-data:/data
-    # Phase 2: switch to Postgres by setting DATABASE_URL and uncommenting:
-    #   DATABASE_URL=postgresql+psycopg2://miraz:miraz@db:5432/miraz
-    expose:
-      - "8000"
-
-  frontend:
-    build: ./frontend
+  web:
+    build: .
     ports:
-      - "8080:80"
-    depends_on:
-      - backend
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - MIRAZ_DB=/data/miraz.db
+      # Restrict browsers to this origin in production, e.g.:
+      # - ALLOWED_ORIGINS=http://localhost:8000
+    volumes:
+      # Database only: baked-in miraz.db is copied here on first boot,
+      # then survives restarts and image rebuilds.
+      - miraz-data:/data
 
-  # Phase 2 (narrator graphs + larger datasets):
+  # Phase 2 (larger datasets / write traffic): Postgres + hosted file store.
   # db:
   #   image: postgres:16-alpine
   #   environment:

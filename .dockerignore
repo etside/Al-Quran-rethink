@@ -1,0 +1,17 @@
+# Single-image build context
+.git/
+.venv/
+venv/
+**/venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+node_modules/
+**/node_modules/
+frontend/dist/
+frontend/.vite/
+*.log
+.vercel/
+.DS_Store
+.env
+.env.*.local
